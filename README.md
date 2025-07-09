@@ -1,6 +1,9 @@
-# Mandelbrot Set Project
+Mandelbrot Set Project
+======================
 Hello this is Rex.
 I origonally created this as a final project for school, but ever since I made it I have wanted to improve it.
+
+## Use
 
 ## Original Project
 The original program is in the folder "Origonal_Project". This was the project that I completed in school, which I will leave here as inspiration for the next version. The current images are from that project, but hopefully soon I will have the next version working!
