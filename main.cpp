@@ -5,7 +5,7 @@
 
 using namespace std;
 
-unsigned long mandelbrotEscape(Complex coords, unsigned long iterations) {
+unsigned int mandelbrotEscape(Complex coords, unsigned long iterations) {
     Complex nthIteration = coords;
     unsigned long i = 0;
     while ((i < iterations) && (nthIteration.magnitudeSquared() <= 4)) {
@@ -119,6 +119,4 @@ int main(int argc, char* argv[]) {
         fout << endl;
     }
     fout.close();
-
-    
 }
