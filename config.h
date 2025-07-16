@@ -5,6 +5,11 @@
 constexpr int IMAGE_WIDTH  = 1920;
 constexpr int IMAGE_HEIGHT = 1080;
 
+// Image dimensions
+constexpr int MAX_IMAGE_WIDTH  = 1920;
+constexpr int MAX_IMAGE_HEIGHT = 1080;
+
 // Max iterations and zoom for Mandelbrot calculation
 constexpr int MAX_ITERATIONS = 100000;
+constexpr int MAX_ZOOM = 100000;
 #endif

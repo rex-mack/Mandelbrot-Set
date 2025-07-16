@@ -1,4 +1,3 @@
-#include <ostream>
 #include "config.h"
 using namespace std;
 
