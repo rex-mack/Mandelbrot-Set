@@ -1,119 +1,100 @@
+#include <stdexcept>
+#include <algorithm>
 #include "mandelbrot.hpp"
 
-MandelbrotGraph::MandelbrotGraph() {
-    head = nullptr;
-    width = 0;
-    height = 0;
-    total_recursions = 0;
-}
+/*
+ ----- Section -----
+*/
 
-void free_grid(Section* curr) {
-    while (curr != nullptr) {
-        Section* nextCol = curr->right;
-        free_column(curr);
-        curr = nextCol;
+
+
+/*
+ ----- MandelbrotGraph -----
+ -- Private --
+*/
+
+
+void MandelbrotGraph::setImageCoordinates() {
+    /*
+    sets the coordinates for each point
+    resets escape, escapeRecursions, & totalIterations to 0
+    */
+
+    //precompute the x coordinates and y coordiants
+    double coordinatesX[imageWidth];
+    double coordinatesI[imageHeight];
+
+    //      precalculate for coordiantes
+    double imageMin = std::min(imageWidth, imageHeight);
+    double aspectX = static_cast<double>(imageWidth) / imageMin;
+    double aspectI = static_cast<double>(imageHeight) / imageMin;
+    double maxValue = 17.0 / 8.0 / zoom;
+
+    double spanScaleX = (2.0 * maxValue * aspectX) / (imageWidth - 1);
+    double spanScaleI = (2.0 * maxValue * aspectI) / (imageHeight - 1);
+
+    //      calculate x coordiantes
+    double centerReal = center.getReal();
+    for (int x = 0; x < imageWidth; ++x) {
+        coordinatesX[x] = centerReal + (x * spanScaleX - maxValue * aspectX);
+    }
+
+    //      calculate i coordinates
+    double centerImag = center.getImag();
+    for (int i = 0; i < imageHeight; ++i) {
+        coordinatesI[i] = centerImag + (i * spanScaleI - maxValue * aspectI);
+    }
+
+    //insert coordinates & reset everything else to 0
+    totalIterations = 0;
+    for (int i = 0; i < imageHeight; ++i) {
+        for (int x = 0; x < imageWidth; ++x) {
+            coordinates[i * imageWidth + x] = Complex(coordinatesX[x], coordinatesI[i]);
+            escape[i*imageWidth + x] = Complex();
+            escapeIterations[i*imageWidth + x] = 0;
+        }
     }
 }
 
-void free_column(Section* curr) {
-    while (curr != nullptr) {
-        Section* nextRow = curr->down;
-        delete curr;
-        curr = nextRow;
-    }
-}
-MandelbrotGraph::~MandelbrotGraph() {
-    free_grid(head);
-}
+/*
+ ----- MandelbrotGraph -----
+ -- Public --
+*/
 
-void MandelbrotGraph::resizeImage(unsigned int setWidth, unsigned int setHeight) {
-    if (setWidth > MAX_IMAGE_WIDTH) {
-        cout << "ERROR: mandelbrot.cpp Tried to set image width > " << setWidth << endl;
-        cout << "   Change in config.h" << endl;
-        return;
+MandelbrotGraph::MandelbrotGraph(unsigned int setImageWidth, unsigned int setImageHeight, Complex setCenter, unsigned int setZoom) {
+    if (setImageWidth > MAX_IMAGE_WIDTH) {
+        throw std::out_of_range("Image width exceeds maximum allowed size");
     }
-    if (setHeight > MAX_IMAGE_HEIGHT) {
-        cout << "ERROR: mandelbrot.cpp Tried to set image height > " << setHeight << endl;
-        cout << "   Change in config.h" << endl;
-        return;
+    if (setImageHeight > MAX_IMAGE_HEIGHT) {
+        throw std::out_of_range("Image height exceeds maximum allowed size");
     }
-    if ((setWidth == 0) || (setHeight == 0)) return;
+    if (setImageWidth == 0 || setImageHeight == 0) {
+        throw std::invalid_argument("Image dimensions cannot be zero");
+    }
 
-    width = setWidth;
-    height = setHeight;
+    imageWidth = setImageWidth;
+    imageHeight = setImageHeight;
+    center = setCenter;
+    zoom = setZoom;
 
-    head = new_row();
-    Section *prev = head;
-    for(unsigned int i = section_size; i < height; i += section_size) {
-        link_rows(prev, new_row());
-        prev = prev->down;
-    }
+    setImageCoordinates();
 }
 
-Section *MandelbrotGraph::new_row() {
-    if (width == 0) return nullptr;
-    Section *headSection = new Section;
-    Section *curr = headSection;
-    for(unsigned int i = section_size; i < width; i += section_size) {
-        Section *newSection = new Section;
-        curr->right = newSection;
-        curr = curr->right;
-    }
-    return headSection;
-}
-void MandelbrotGraph::link_rows(Section *sectionHead, Section *newSectionHead) {
-    if((sectionHead == nullptr) || (newSectionHead == nullptr)) return;
+void MandelbrotGraph::setIterationDepth(unsigned int targetIterations) {
+    if (targetIterations < totalIterations) setImageCoordinates();
+        
+    for(int i = 0; i < imageHeight; ++i) {
+        for(int x = 0; x < imageWidth; ++x) {
+            unsigned int pixelIndex = i*imageWidth + x;
+            if (escapeIterations[pixelIndex] >= totalIterations)
+                continue;
 
-    Section *sectionDownHead = sectionHead->down;
-
-    Section *top = sectionHead;
-    Section *bottom = newSectionHead;
-    for(unsigned int x = 0; x < width; x += section_size) {
-        top->down = bottom;
-        top = top->right;
-        bottom = bottom->right;
+            for (int iter = totalIterations; (iter < targetIterations) && escape[pixelIndex].magnitudeSquared() <= 4.0; ++iter) {
+                escape[pixelIndex] = escape[pixelIndex].square() + coordinates[pixelIndex];
+                ++escapeIterations[pixelIndex];
+            }
+        }
     }
 
-    if(sectionDownHead == nullptr) return;
-    top = newSectionHead;
-    bottom = sectionDownHead;
-    for(unsigned int x = 0; x < width; x += section_size) {
-        top->down = bottom;
-        top = top->right;
-        bottom = bottom->right;
-    }
-}
-
-Section *MandelbrotGraph::new_column() {
-    if (height == 0) return nullptr;
-    Section *headSection = new Section;
-    Section *curr = headSection;
-    for(unsigned int i = section_size; i < height; i += section_size) {
-        Section *newSection = new Section;
-        curr->down = newSection;
-        curr = curr->down;
-    }
-    return headSection;
-}
-void MandelbrotGraph::link_columns(Section *sectionHead, Section *new_sectionHead) {
-    if((sectionHead == nullptr) || (new_sectionHead == nullptr)) return;
-
-    Section *sectionRightHead = sectionHead->right;
-
-    Section *left = sectionHead;
-    Section *right = new_sectionHead;
-    for(unsigned int i = 0; i < height; i += section_size) {
-        left->right = right;
-        left = left->down;
-        right = right->down;
-    }
-
-    if(sectionRightHead == nullptr) return;
-    left = new_sectionHead;
-    right = sectionRightHead;
-    for(unsigned int i = 0; i < height; i += section_size) {
-        left->right = right;
-        left = left->down;
-        right = right->down;
-    }
+    totalIterations = targetIterations;
 }

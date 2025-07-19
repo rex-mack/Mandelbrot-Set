@@ -1,5 +1,4 @@
 #include "config.h"
-using namespace std;
 
 /*
     Complex number in form a + bi
@@ -16,18 +15,18 @@ using namespace std;
 */
 class Complex {
     private:
-    long double real;
-    long double imag;
+    double real;
+    double imaginary;
 
     public:
     Complex();
-    Complex(long double r, long double i); // set the number (real part, imaginary part)
+    Complex(double r, double i); // set the number (real part, imaginary part)
 
-    long double getReal() const; // returns real part
-    long double getImag() const; // returns imaginary part
+    double getReal() const; // returns real part
+    double getImag() const; // returns imaginary part
 
     Complex operator+(const Complex& other) const;
     Complex operator-(const Complex& other) const;
     Complex square() const; // retures the number^2
-    long double magnitudeSquared() const; // returns magnitude squared
+    double magnitudeSquared() const; // returns magnitude squared
 };

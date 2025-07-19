@@ -1,32 +1,30 @@
 #include "complex.hpp"
 #include "config.h"
-#include <iostream>
 
-using namespace std;
 
 Complex::Complex() {
     real = 0.0;
-    imag = 0.0;
+    imaginary = 0.0;
 }
-Complex::Complex(long double r, long double i) {
+Complex::Complex(double r, double i) {
     real = r;
-    imag = i;
+    imaginary = i;
 }
-long double Complex::getReal() const {
+double Complex::getReal() const {
     return real;
 }
-long double Complex::getImag() const {
-    return imag;
+double Complex::getImag() const {
+    return imaginary;
 }
 Complex Complex::operator+(const Complex& other) const {
-    return Complex(real + other.real, imag + other.imag);
+    return Complex(other.real + real, other.imaginary + imaginary);
 }
 Complex Complex::operator-(const Complex& other) const {
-    return Complex(other.real - real, other.imag - imag);
+    return Complex(other.real - real, other.imaginary - imaginary);
 }
 Complex Complex::square() const {
-    return Complex((real*real) - (imag*imag), 2*real*imag);
+    return Complex((real*real) - (imaginary*imaginary), 2*real*imaginary);
 }
-long double Complex::magnitudeSquared() const {
-    return (real*real) + (imag*imag);
+double Complex::magnitudeSquared() const {
+    return (real*real) + (imaginary*imaginary);
 }

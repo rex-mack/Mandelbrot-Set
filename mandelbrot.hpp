@@ -1,31 +1,21 @@
 #include "config.h"
 #include "complex.cpp"
 
-const unsigned int section_size = 16;
-
-struct Section {
-    Section *right;
-    Section *down;
-    Complex section[section_size][section_size];
-    bool section_done;
-};
-
 class MandelbrotGraph {
     private:
-    Section *head;
-    unsigned int width;
-    unsigned int height;
-    unsigned int total_recursions;
-
-    Section *new_row();
-    void link_rows(Section *section_head, Section *new_section_head);
-    Section *new_column();
-    void link_columns(Section *section_head, Section *new_section_head);
+    unsigned int imageWidth;
+    unsigned int imageHeight;
+    Complex center;
+    unsigned int zoom;
+    unsigned int totalIterations;
+    Complex coordinates[MAX_IMAGE_HEIGHT * MAX_IMAGE_WIDTH]; //starting coordinates
+    Complex escape[MAX_IMAGE_HEIGHT * MAX_IMAGE_WIDTH]; //where coordiantes ended up
+    unsigned int escapeIterations[MAX_IMAGE_HEIGHT * MAX_IMAGE_WIDTH]; //how many recursions that point has gone through
+    
+    void setImageCoordinates();
 
     public:
-    MandelbrotGraph();
-    ~MandelbrotGraph();
+    MandelbrotGraph(unsigned int setImageWidth, unsigned int setImageHeight, Complex setCenter, unsigned int setZoom);
 
-    void resize_image(unsigned int set_width, unsigned int set_height);
-    void set_coordinates(double center, int zoom);
+    void setIterationDepth(unsigned int targetIterations);
 };
