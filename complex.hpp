@@ -1,3 +1,6 @@
+#ifndef COMPLEX_HPP
+#define COMPLEX_HPP
+
 #include "config.h"
 
 /*
@@ -30,3 +33,7 @@ class Complex {
     Complex square() const; // retures the number^2
     double magnitudeSquared() const; // returns magnitude squared
 };
+
+std::ostream& operator<<(std::ostream& out, const Complex& c) ;
+
+#endif

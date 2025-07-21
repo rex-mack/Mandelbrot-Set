@@ -29,3 +29,7 @@ Create a UI that:
  - Real time update 
  - Ajustable colors
  - Ajust precission (how many recursions)
+
+ ## GF
+ Thanks to my partner Kate for giving me support 💕
+

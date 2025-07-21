@@ -1,3 +1,8 @@
+#ifndef IMAGE_RENDERER_HPP
+#define IMAGE_RENDERER_HPP
+
+#include <iostream>
+#include <fstream>
 #include <string>
 #include "mandelbrot.hpp"
 
@@ -5,8 +10,9 @@ using namespace std;
 
 class ImageRenderer {
     private:
-    MandelbrotGraph &graph;
     
     public:
-        static void writePPM(const MandelbrotGraph& graph, const string &filepath);
+        void writeDebugFiles(const MandelbrotGraph &graph);
 };
+
+#endif

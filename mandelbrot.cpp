@@ -1,6 +1,9 @@
 #include <stdexcept>
 #include <algorithm>
+#include <iostream>
 #include "mandelbrot.hpp"
+
+using namespace std;
 
 /*
  ----- Section -----
@@ -28,7 +31,7 @@ void MandelbrotGraph::setImageCoordinates() {
     double imageMin = std::min(imageWidth, imageHeight);
     double aspectX = static_cast<double>(imageWidth) / imageMin;
     double aspectI = static_cast<double>(imageHeight) / imageMin;
-    double maxValue = 17.0 / 8.0 / zoom;
+    double maxValue = IMAGE_RADIUS_NUMERATOR / zoom / IMAGE_RADIUS_DENOMINATOR;
 
     double spanScaleX = (2.0 * maxValue * aspectX) / (imageWidth - 1);
     double spanScaleI = (2.0 * maxValue * aspectI) / (imageHeight - 1);
@@ -50,7 +53,7 @@ void MandelbrotGraph::setImageCoordinates() {
     for (int i = 0; i < imageHeight; ++i) {
         for (int x = 0; x < imageWidth; ++x) {
             coordinates[i * imageWidth + x] = Complex(coordinatesX[x], coordinatesI[i]);
-            escape[i*imageWidth + x] = Complex();
+            escapeCoordinates[i*imageWidth + x] = Complex();
             escapeIterations[i*imageWidth + x] = 0;
         }
     }
@@ -61,7 +64,7 @@ void MandelbrotGraph::setImageCoordinates() {
  -- Public --
 */
 
-MandelbrotGraph::MandelbrotGraph(unsigned int setImageWidth, unsigned int setImageHeight, Complex setCenter, unsigned int setZoom) {
+MandelbrotGraph::MandelbrotGraph(unsigned int setImageWidth, unsigned int setImageHeight, Complex setCenter, double setZoom) {
     if (setImageWidth > MAX_IMAGE_WIDTH) {
         throw std::out_of_range("Image width exceeds maximum allowed size");
     }
@@ -71,14 +74,29 @@ MandelbrotGraph::MandelbrotGraph(unsigned int setImageWidth, unsigned int setIma
     if (setImageWidth == 0 || setImageHeight == 0) {
         throw std::invalid_argument("Image dimensions cannot be zero");
     }
+    if (setZoom < 1) {
+        throw std::invalid_argument("Zoom cannot be < 1");
+    }
 
     imageWidth = setImageWidth;
     imageHeight = setImageHeight;
     center = setCenter;
     zoom = setZoom;
 
+    coordinates = new Complex[setImageWidth * setImageHeight];
+    escapeCoordinates = new Complex[setImageWidth * setImageHeight];
+    escapeIterations = new unsigned int[setImageWidth * setImageHeight];
+
     setImageCoordinates();
 }
+
+
+MandelbrotGraph::~MandelbrotGraph() {
+    delete[] coordinates;
+    delete[] escapeCoordinates;
+    delete[] escapeIterations;
+}
+
 
 void MandelbrotGraph::setIterationDepth(unsigned int targetIterations) {
     if (targetIterations < totalIterations) setImageCoordinates();
@@ -86,15 +104,44 @@ void MandelbrotGraph::setIterationDepth(unsigned int targetIterations) {
     for(int i = 0; i < imageHeight; ++i) {
         for(int x = 0; x < imageWidth; ++x) {
             unsigned int pixelIndex = i*imageWidth + x;
-            if (escapeIterations[pixelIndex] >= totalIterations)
-                continue;
-
-            for (int iter = totalIterations; (iter < targetIterations) && escape[pixelIndex].magnitudeSquared() <= 4.0; ++iter) {
-                escape[pixelIndex] = escape[pixelIndex].square() + coordinates[pixelIndex];
-                ++escapeIterations[pixelIndex];
+            if (escapeIterations[pixelIndex] == totalIterations) {
+                for (int iter = totalIterations; (iter < targetIterations) && (escapeCoordinates[pixelIndex].magnitudeSquared() <= 4.0); ++iter) {
+                    escapeCoordinates[pixelIndex] = escapeCoordinates[pixelIndex].square() + coordinates[pixelIndex];
+                    ++escapeIterations[pixelIndex];
+                }
             }
         }
     }
 
     totalIterations = targetIterations;
+}
+
+Complex MandelbrotGraph::getCenter() const {
+    return center;
+}
+
+double MandelbrotGraph::getZoom() const {
+    return zoom;
+}
+
+unsigned int MandelbrotGraph::getImageWidth() const {
+    return imageWidth;
+}
+
+unsigned int MandelbrotGraph::getImageHeight() const {
+    return imageHeight;
+}
+
+unsigned int MandelbrotGraph::getMaxIterations() const {
+    return totalIterations;
+}
+
+Complex MandelbrotGraph::getCoordinates(unsigned int imageX, unsigned int imageY) const {
+    return coordinates[imageY * imageWidth + imageX];
+}
+Complex MandelbrotGraph::getEscapeCoordinates(unsigned int imageX, unsigned int imageY) const {
+    return escapeCoordinates[imageY * imageWidth + imageX];
+}
+unsigned int MandelbrotGraph::getEscapeIteration(unsigned int imageX, unsigned int imageY) const {
+    return escapeIterations[imageY * imageWidth + imageX];
 }

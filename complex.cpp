@@ -1,3 +1,4 @@
+#include <ostream>
 #include "complex.hpp"
 #include "config.h"
 
@@ -27,4 +28,8 @@ Complex Complex::square() const {
 }
 double Complex::magnitudeSquared() const {
     return (real*real) + (imaginary*imaginary);
+}
+std::ostream& operator<<(std::ostream& out, const Complex& c) {
+    out << '(' << c.getReal() << " + " << c.getImag() << 'i' << ')';
+    return out;
 }
