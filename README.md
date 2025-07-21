@@ -5,11 +5,14 @@ I origonally created this as a final project for school, but ever since I made i
 
 ## Use
 Compile using:
- - g++ -std=c++17 -o mandelbrot main.cpp complex.cpp   
+ - g++ -std=c++17 -O2 -o mandelbrot main.cpp complex.cpp mandelbrot.cpp imageRenderer.cpp  
 
 Run using:
  - ./mandelbrot
- - ./mandelbrot [Max Iterations] [Zoom] [Center Coordinate X] [Center Coordinate I]
+
+## What it does
+So far I have only implemented a debug to print images... more coming!
+
 ## Original Project
 The original program is in the folder "Origonal_Project". This was the project that I completed in school, which I will leave here as inspiration for the next version. The current images are from that project, but hopefully soon I will have the next version working!
 
