@@ -16,7 +16,7 @@ class MandelbrotGraph {
     Complex *escape; //where coordiantes ended up
     unsigned int *iterations; //how many recursions that point has gone through
 
-    void validateValues(Complex center, double zoom, unsigned int imageWidth, unsigned int imageHeight) const; // validates the values
+    void validateValues(Complex center, double zoom, unsigned int targetIterations, unsigned int imageWidth, unsigned int imageHeight) const; // validates the values
 
     void setImageCoordinates(); //sets the coordinates for each point
     void runMandelbrotIterations(); // does the Mandelbrot iterations for each point

@@ -25,6 +25,9 @@ Complex Complex::operator*(const Complex& other) const {
     return Complex((real * other.real) - (imaginary * other.imaginary),
                    (real * other.imaginary) + (imaginary * other.real));
 }
+bool Complex::operator==(const Complex& other) const {
+    return (real == other.real) && (imaginary == other.imaginary);
+}
 double Complex::magnitudeSquared() const {
     return (real*real) + (imaginary*imaginary);
 }

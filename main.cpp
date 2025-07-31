@@ -142,6 +142,9 @@ bool executeCommand(std::string command, MandelbrotGraph &graph) {
     std::vector<std::string> argv; // Arguments vector
     parseString(command, argc, argv);
 
+    if (argc == 0) {
+        return true; // No command entered
+    }
     if (argc == 4 && argv[0] == "set" && argv[1] == "center") {
         try {
             double x = std::stod(argv[2]);
@@ -159,7 +162,107 @@ bool executeCommand(std::string command, MandelbrotGraph &graph) {
         }
         return true;
     }
-    if (argc == 0) {
+    if (argc == 3 && argv[0] == "set" && argv[1] == "zoom") {
+        try {
+            double zoom = std::stod(argv[2]);
+            graph.setGraphValues(graph.getCenter(), zoom, graph.getTargetIterations(), graph.getImageWidth(), graph.getImageHeight());
+            std::cout << '\n';
+            printImage(graph);
+        } catch (const std::invalid_argument &e) {
+            std::cerr << "Invalid zoom factor: " << argv[2] << '\n';
+        }
+        return true;
+    }
+    if (argc == 3 && argv[0] == "set" && argv[1] == "iterations") {
+        try {
+            unsigned int iterations = std::stoul(argv[2]);
+            graph.setGraphValues(graph.getCenter(), graph.getZoom(), iterations, graph.getImageWidth(), graph.getImageHeight());
+            std::cout << '\n';
+            printImage(graph);
+        } catch (const std::invalid_argument &e) {
+            std::cerr << "ERROR set iterations: " << e.what() << '\n';
+        }
+        return true;
+    }
+    if (argc == 3 && argv[0] == "move") {
+        try {
+            int x = std::stoi(argv[1]);
+            int y = std::stoi(argv[2]);
+            graph.moveCenterByPixel(x, y);
+            std::cout << '\n';
+            printImage(graph);
+        } catch (const std::invalid_argument &e) {
+            std::cerr << "Invalid pixel values: " << argv[1] << " - " << argv[2] << '\n';
+        }
+        return true;
+    }
+    if (argc == 2 && argv[0] == "zoom") {
+        try {
+            double factor = std::stod(argv[1]);
+            graph.zoomIn(factor);
+            std::cout << '\n';
+            printImage(graph);
+        } catch (const std::invalid_argument &e) {
+            std::cerr << "Invalid zoom factor: " << argv[1] << '\n';
+        }
+        return true;
+    }
+    if (argc == 3 && argv[0] == "increase" && argv[1] == "depth") {
+        try {
+            unsigned int factor = std::stoul(argv[2]);
+            graph.increaseIterations(factor);
+            std::cout << '\n';
+            printImage(graph);
+        } catch (const std::invalid_argument &e) {
+            std::cerr << "Invalid factor for increasing iterations: " << argv[2] << '\n';
+        }
+        return true;
+    }
+    if (argc == 3 && argv[0] == "decrease" && argv[1] == "depth") {
+        try {
+            unsigned int factor = std::stoul(argv[2]);
+            if (factor > graph.getTargetIterations()) {
+                std::cerr << "Cannot decrease iterations below current target iterations: " << graph.getTargetIterations() << '\n';
+                return true; // Continue the loop
+            }
+            graph.increaseIterations(-factor); // Decrease iterations by negative factor
+            std::cout << '\n';
+            printImage(graph);
+        } catch (const std::invalid_argument &e) {
+            std::cerr << "Invalid factor for decreasing iterations: " << argv[2] << '\n';
+        }
+        return true;
+    }
+    if (argc == 1 && argv[0] == "print") {
+        printImage(graph);
+        return true; // Continue the loop
+    }
+    if (argc == 5 && argv[0] == "change" && argv[1] == "image" && argv[2] == "size") {
+        try {
+            unsigned int width = std::stoul(argv[3]);
+            unsigned int height = std::stoul(argv[4]);
+            graph.setGraphValues(graph.getCenter(), graph.getZoom(), graph.getTargetIterations(), width, height);
+            std::cout << '\n';
+            printImage(graph);
+        } catch (const std::invalid_argument &e) {
+            std::cerr << "Invalid image size: " << argv[3] << " - " << argv[4] << '\n';
+        }
+        return true;
+    }
+    if (argc == 1 && argv[0] == "save") {
+        try {
+            saveImage();
+        } catch (const std::exception &e) {
+            std::cerr << "Error saving image: " << e.what() << '\n';
+        }
+        return true; // Continue the loop
+    }
+    if (argc == 2 && argv[0] == "save") {
+        try {
+            saveImage(argv[1]);
+        } catch (const std::exception &e) {
+            std::cerr << "Error saving image: " << e.what() << '\n';
+        }
         return true; // Continue the loop
     }
     if (argc == 1 && argv[0] == "exit") {

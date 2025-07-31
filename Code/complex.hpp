@@ -29,6 +29,7 @@ class Complex {
     Complex operator+(const Complex& other) const;
     Complex operator-(const Complex& other) const;
     Complex operator*(const Complex& other) const; // retures the number^2
+    bool operator==(const Complex& other) const; // checks if two complex numbers are equal
     double magnitudeSquared() const; // returns magnitude squared
 };
 

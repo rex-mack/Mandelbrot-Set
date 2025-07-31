@@ -16,7 +16,7 @@ using namespace std;
  -- Private --
 */
 
-void MandelbrotGraph::validateValues(Complex center, double zoom, unsigned int imageWidth, unsigned int imageHeight) const {
+void MandelbrotGraph::validateValues(Complex center, double zoom, unsigned int targetIterations, unsigned int imageWidth, unsigned int imageHeight) const {
     double maxRadius = IMAGE_RADIUS_NUMERATOR / zoom / IMAGE_RADIUS_DENOMINATOR;
     if (center.getReal() < -maxRadius || center.getReal() > maxRadius||
         center.getImag() < -maxRadius || center.getImag() > maxRadius) {
@@ -24,12 +24,16 @@ void MandelbrotGraph::validateValues(Complex center, double zoom, unsigned int i
     }
     if (zoom < 1) {
         throw std::invalid_argument("Zoom level must be greater than 1");
+    } else if (zoom > MAX_ZOOM) {
+        throw std::invalid_argument("Zoom level must not exceed " + std::to_string(MAX_ZOOM));
     }
     if (imageWidth == 0 || imageHeight == 0) {
         throw std::invalid_argument("Image dimensions cannot be zero");
+    } else if (imageWidth > MAX_IMAGE_WIDTH || imageHeight > MAX_IMAGE_HEIGHT) {
+        throw std::invalid_argument("Image dimensions must not exceed " + std::to_string(MAX_IMAGE_WIDTH) + "x" + std::to_string(MAX_IMAGE_HEIGHT));
     }
-    if (targetIterations == 0) {
-        throw std::invalid_argument("Maximum iterations must be greater than zero");
+    if (targetIterations > MAX_ITERATIONS) {
+        throw std::invalid_argument("Maximum iterations must not exceed " + std::to_string(MAX_ITERATIONS));
     }
 }
 void MandelbrotGraph::setImageCoordinates() {
@@ -85,10 +89,11 @@ void MandelbrotGraph::runMandelbrotIterations() { //implement doing this in para
     does the Mandelbrot iterations for each point
      - sets escape, escapeRecursions, maxIterations, minIterations
     */
-    std::cout << "🚀 Doing at least " << (targetIterations - maxIterations) << " Mandelbrot iterations for each " << imageWidth * imageHeight << " pixels\n";
 
     //check if the targetIterations is less than maxIterations
     if (targetIterations < maxIterations) setImageCoordinates();
+
+    std::cout << "🚀 Doing at least " << (targetIterations - maxIterations) << " Mandelbrot iterations for each " << imageWidth * imageHeight << " pixels\n";
 
     //set escape and iterations
     for(unsigned int i = 0; i < imageHeight / 2; ++i) {
@@ -165,7 +170,7 @@ MandelbrotGraph::MandelbrotGraph() {
 }
 MandelbrotGraph::MandelbrotGraph(unsigned int width, unsigned int height, Complex center, double zoom, unsigned int targetIterations) {
     try {
-        validateValues(center, zoom, width, height);
+        validateValues(center, zoom, targetIterations, width, height);
     } catch (const std::invalid_argument &e) {
         throw std::invalid_argument("Invalid parameters: " + std::string(e.what()));
     }
@@ -225,21 +230,34 @@ void MandelbrotGraph::setGraphValues(Complex center, double zoom, unsigned int t
     /*
     sets the graph values
      - sets the center, zoom, targetIterations, imageWidth, imageHeight
-     - validates the values
      - sets the coordinates and does the Mandelbrot iterations
     */
 
     // Validate the input values
     try {
-        validateValues(center, zoom, imageWidth, imageHeight);
+        validateValues(center, zoom, targetIterations, imageWidth, imageHeight);
     } catch (const std::invalid_argument &e) {
         throw std::invalid_argument("Invalid parameters: " + std::string(e.what()));
+    }
+
+    //if nothing has changed, just return
+    if (this->center == center && this->zoom == zoom && this->targetIterations == targetIterations &&
+        this->imageWidth == imageWidth && this->imageHeight == imageHeight) {
+        return;
+    }
+
+    this->targetIterations = targetIterations;
+
+    //if nothing has changed except the targetIterations, just do the iterations
+    if (this->center == center && this->zoom == zoom &&
+        this->imageWidth == imageWidth && this->imageHeight == imageHeight) {
+        runMandelbrotIterations();
+        return;
     }
 
     //set the graph values
     this->center = center;
     this->zoom = zoom;
-    this->targetIterations = targetIterations;
 
     if(imageWidth != this->imageWidth || imageHeight != this->imageHeight) {
         this->imageWidth = imageWidth;
