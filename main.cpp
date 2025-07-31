@@ -1,35 +1,56 @@
 #include <csignal>
 #include <iostream>
-#include <fstream>
 #include <filesystem>
+#include <fstream>
+#include <sstream>
 
-#include "imageRenderer.hpp"
+#include "config.h"
+#include "Code/complex.hpp"
+#include "Code/mandelbrot.hpp"
 
-void handleSignal(int signal) { // Handle signals like Ctrl+C
+/*
+Handeling Signals
+*/
+
+void handleSignal(int signal) {// Handle signals like Ctrl+C
     if (signal == SIGINT) {
         std::cout << "\nExiting gracefully...\n";
         exit(0);
     }
 }
 
-void validateGraphParameters(const MandelbrotGraph &graph) {
-    if (graph.getImageWidth() == 0 || graph.getImageHeight() == 0) {
-        throw std::invalid_argument("Image dimensions cannot be zero");
-    }
-    if (graph.getMaxIterations() == 0) {
-        throw std::invalid_argument("Maximum iterations must be greater than zero");
-    }
-    if (graph.getCenter().getReal() < -2.0 || graph.getCenter().getReal() > 2.0 ||
-        graph.getCenter().getImag() < -2.0 || graph.getCenter().getImag() > 2.0) {
-        throw std::invalid_argument("Center coordinates must be within the range [-2, 2]");
-    }
+/*
+Menue Messages
+*/
+
+void printWelcomeMessage() {
+    std::cout << " ----- Mandelbrot Set Renderer -----\n";
+    std::cout << "This program renders the Mandelbrot Set and saves it as an image.\n";
+    std::cout << "Press Ctrl+C to exit at any time.\n";
+    std::cout << " -------------------------------------\n\n";
 }
+
+void printMenu() {
+    std::cout << " --------------------------- Command Menu ---------------------------\n";
+    std::cout << " - 'set center <x> <y>'        - to set the center of the Image to coordinates <x> <y>i\n";
+    std::cout << " - 'set zoom <factor>'         - to set the zoom level of the Image\n";
+    std::cout << " - 'set iterations <number>'   - to set the maximum number of iterations for the Mandelbrot Set\n";
+    std::cout << " - 'move <x> <y>'              - to move the center of the Image by <x> <y> pixels\n";
+    std::cout << " - 'zoom <factor>'             - to change the zoom level\n";
+    std::cout << " - 'increase depth <factor>'   - to increase the maximum number of iterations\n";
+    std::cout << " - 'decrease depth <factor>'   - to decrease the maximum number of iterations\n";
+    std::cout << " - 'print'                     - to print the current image called \"Mandelbrot_Image.pgm\"\n";
+    std::cout << " - 'change image size <x> <y>' - to change the dimentions of the image\n";
+    std::cout << " - 'save [file name]'          - to save the current image. If [file name] is omitted, the default name 'Mandelbrot_Image' will be used.\n";
+    std::cout << " - 'exit'                      - to exit the program\n";
+    std::cout << " - 'menu'                      - to show this menu again\n";
+    std::cout << " --------------------------------------------------------------------\n";
+}
+
+
 
 void printImage(const MandelbrotGraph &graph) {
     std::cout << " --- Rendering Mandelbrot Set Image -----\n";
-
-    //check for errors
-    validateGraphParameters(graph);
 
     //create .ppm file
     std::ofstream out("Mandelbrot_Image.pgm");
@@ -70,10 +91,13 @@ void printImage(const MandelbrotGraph &graph) {
     std::cout << "  ✅ Image written to ./Mandelbrot_Image.pgm\n";
     out.close();
 
-    std::cout << " ------------------------------------\n\n";
+    std::cout << " ------------------------------------\n";
 }
 
-void saveImage(string filename = "Mandelbrot_Image") {
+/*
+Image Processing
+*/
+void saveImage(std::string filename = "Mandelbrot_Image") {
     std::cout << "  --- Saving Mandelbrot Set Image ---\n";
 
     // Create the directory if it doesn't exist
@@ -81,7 +105,7 @@ void saveImage(string filename = "Mandelbrot_Image") {
 
     // Construct the full file path
     std::string filePath = "Mandelbrot_Images/" + filename + ".pgm";
-    int fileCounter = 1;
+    int fileCounter = 0;
     while (std::filesystem::exists(filePath)) {
         filePath = "Mandelbrot_Images/" + filename + "(" + std::to_string(fileCounter++) + ").pgm";
     }
@@ -94,23 +118,97 @@ void saveImage(string filename = "Mandelbrot_Image") {
 
     // Print success message
     std::cout << "  ✅ Image saved to " << filePath << '\n';
-    std::cout << " ------------------------------------\n\n";
+    std::cout << " ------------------------------------\n";
 }
 
+/*
+Command Processing
+*/
+
+void parseString(const std::string &input, int &argc, std::vector<std::string> &argv) {
+    std::istringstream stream(input);
+    std::string arg;
+
+    argc = 0; // Reset argument count
+    argv.clear(); // Clear previous arguments
+    while (stream >> arg) {
+        argv.push_back(arg);
+        argc++;
+    }
+}
+
+bool executeCommand(std::string command, MandelbrotGraph &graph) {
+    int argc; // Argument count
+    std::vector<std::string> argv; // Arguments vector
+    parseString(command, argc, argv);
+
+    if (argc == 4 && argv[0] == "set" && argv[1] == "center") {
+        try {
+            double x = std::stod(argv[2]);
+            double i = std::stod(argv[3]);
+            double radius = IMAGE_RADIUS_NUMERATOR/IMAGE_RADIUS_DENOMINATOR;
+
+            // Check if the coordinates are within the valid range
+            graph.setGraphValues(Complex(x, i), graph.getZoom(), graph.getTargetIterations(), graph.getImageWidth(), graph.getImageHeight());
+            std::cout << '\n';
+            printImage(graph);
+        } catch (const std::invalid_argument &e) { // Handle invalid input
+            std::cerr << "Invalid center coordinates: " << argv[2] << " - " << argv[3] << '\n';
+        } catch (const std::out_of_range &e) { // Handle out of range input
+            std::cerr << "Center coordinates out of range: " << argv[2] << " - " << argv[3] << '\n';
+        }
+        return true;
+    }
+    if (argc == 0) {
+        return true; // Continue the loop
+    }
+    if (argc == 1 && argv[0] == "exit") {
+        std::cout << "Exiting the program...\n";
+        return false; // Exit the program
+    }
+    if (argc == 1 && argv[0] == "menu") {
+        printMenu();
+        return true; // Continue the loop
+    }
+    if(argc == 1 && argv[0] == "debug") {
+        try {
+            graph.writeDebugFiles();
+        } catch (const std::exception &e) {
+            std::cerr << "Error writing debug files: " << e.what() << '\n';
+        }
+        return true; // Continue the loop
+    }
+
+    // Handle other commands
+    std::cout << "Unknown command: " << command << '\n';
+    std::cout << "Type 'menu' to see the list of available commands.\n";
+    return true; // Continue the loop
+}
+
+void clearDebugFiles() {
+    if(!std::filesystem::exists("debug_files")) {
+        return; // No debug files to clear
+    }
+    std::cout << "  --- Clearing Debug Files ---\n";
+    std::filesystem::remove_all("debug_files");
+    std::filesystem::create_directory("debug_files");
+    std::cout << "  ✅ Debug files cleared.\n";
+    std::cout << " -------------------------------\n\n";
+}
 
 int main () {
     std::signal(SIGINT, handleSignal); // Handle Ctrl+C to exit gracefully
 
-    std::cout << " ----- Mandelbrot Set Renderer -----\n";
-    std::cout << "This program renders the Mandelbrot Set and saves it as an image.\n";
-    std::cout << "Press Ctrl+C to exit at any time.\n";
-    std::cout << " -------------------------------------\n\n";
+    std::cout << '\n'; // leave a line space after input
+
+    clearDebugFiles(); // Clear debug files at the start
+
+    printWelcomeMessage(); // Print welcome message
 
     // Create the Graph object
-    MandelbrotGraph mandelbrotGraph(1920, 1080, Complex(0.0, 0.0), 1.0);
+    MandelbrotGraph mandelbrotGraph;
 
-    // Set the iteration depth
-    mandelbrotGraph.setIterationDepth(50);
+    std::cout << '\n';
 
     // Render the image
     try {
@@ -119,34 +217,18 @@ int main () {
         std::cerr << "Error: " << e.what() << '\n';
         return 1;
     }
+    std::cout << '\n';
 
     // Print the menu
     printMenu();
 
     // main loop
     while (true) {
-        std::cout << "Enter command: ";
+        std::cout << "\nEnter command: ";
         std::string command;
         std::getline(std::cin, command);
+        std::cout << '\n'; // leave a line space after input
 
-        if (command.empty()) { // Check for empty command
-            continue;
-        }
+        if (executeCommand(command, mandelbrotGraph) == false) return 0; // Exit the program
     }
-}
-
-void printMenu() {
-    std::cout << " -- Command Menu -----\n";
-    std::cout << " - 'set center <x> <y>'       - to set the center of the Image to coordinates <x> <y>i\n";
-    std::cout << " - 'set zoom <factor>'        - to set the zoom level of the Image\n";
-    std::cout << " - 'set iterations <number>'  - to set the maximum number of iterations for the Mandelbrot Set\n";
-    std::cout << " - 'move <x> <y>'             - to move the center of the Image by <x> <y> pixels\n";
-    std::cout << " - 'zoom <factor>'            - to change the zoom level\n";
-    std::cout << " - 'increase depth <factor>'  - to increase the maximum number of iterations\n";
-    std::cout << " - 'decrease depth <factor>'  - to decrease the maximum number of iterations\n";
-    std::cout << " - 'print'                    - to print the current image\n";
-    std::cout << " - 'save [file name]'         - to save the current image. If [file name] is omitted, the default name 'Mandelbrot_Image' will be used.\n";
-    std::cout << " - 'exit'                     - to exit the program\n";
-    std::cout << " - 'menu'                     - to show this menu again\n";
-    std::cout << " ---------------------\n\n";
 }

@@ -1,7 +1,5 @@
 #include <ostream>
 #include "complex.hpp"
-#include "config.h"
-
 
 Complex::Complex() {
     real = 0.0;

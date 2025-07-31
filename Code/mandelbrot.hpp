@@ -9,32 +9,43 @@ class MandelbrotGraph {
     unsigned int imageHeight;
     Complex center;
     double zoom;
+    unsigned int targetIterations;
     unsigned int maxIterations;
     unsigned int minIterations;
     Complex *coordinates; //starting coordinates
     Complex *escape; //where coordiantes ended up
     unsigned int *iterations; //how many recursions that point has gone through
-    
-    void setImageCoordinates();
+
+    void validateValues(Complex center, double zoom, unsigned int imageWidth, unsigned int imageHeight) const; // validates the values
+
+    void setImageCoordinates(); //sets the coordinates for each point
+    void runMandelbrotIterations(); // does the Mandelbrot iterations for each point
+
+    //debug functions
+    Complex getCoordinates(unsigned int xPos, unsigned int yPox) const;
+    Complex getEscape(unsigned int xPos, unsigned int yPox) const;
 
     public:
-    MandelbrotGraph(unsigned int setImageWidth, unsigned int setImageHeight, Complex setCenter, double setZoom);
+    MandelbrotGraph();
+    MandelbrotGraph(unsigned int width, unsigned int height, Complex center, double zoom = 1.0, unsigned int maxIterations = 40);
     ~MandelbrotGraph();
-
-    void setIterationDepth(unsigned int targetIterations);
-    void move(int xPixels, int yPixels); //move image Right / Up so many pixels
-    void changeZoom(double setZoom); //set zoom
-    void changeImageSize(unsigned int setWidth, unsigned int setHeight);
 
     Complex getCenter() const;
     double getZoom() const;
+    unsigned int getTargetIterations() const;
+    unsigned int getMaxIterations() const;
+    unsigned int getMinIterations() const;
+    unsigned int getIterations(unsigned int posX, unsigned int posY) const;
     unsigned int getImageWidth() const;
     unsigned int getImageHeight() const;
-    unsigned int getMinIterations() const;
-    unsigned int getMaxIterations() const;
-    Complex getCoordinates(unsigned int imageX, unsigned int imageY) const; // image (0,0) is top left
-    Complex getEscape(unsigned int imageX, unsigned int imageY) const; // image (0,0) is top left
-    unsigned int getIterations(unsigned int imageX, unsigned int imageY) const; // image (0,0) is top left
+
+    void setGraphValues(Complex center, double zoom, unsigned int targetIterations, unsigned int width, unsigned int height);
+
+    void moveCenterByPixel(int centerX, int centerY);
+    void zoomIn(double factor);
+    void increaseIterations(unsigned int factor);
+
+    void writeDebugFiles(); // writes debug files to debug_files folder
 };
 
 #endif

@@ -1,8 +1,6 @@
 #ifndef COMPLEX_HPP
 #define COMPLEX_HPP
 
-#include "config.h"
-
 /*
     Complex number in form a + bi
         where a is the real part and i is the imaginary part
