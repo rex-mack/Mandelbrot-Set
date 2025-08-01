@@ -22,5 +22,5 @@ constexpr int IMAGE_RADIUS_DENOMINATOR = 8;
 
 //  - Max Values
 constexpr int MAX_ITERATIONS = 10000;
-constexpr int MAX_ZOOM = 10000;
+constexpr int MAX_ZOOM = 10000000;
 #endif

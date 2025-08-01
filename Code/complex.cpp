@@ -32,6 +32,6 @@ double Complex::magnitudeSquared() const {
     return (real*real) + (imaginary*imaginary);
 }
 std::ostream& operator<<(std::ostream& out, const Complex& c) {
-    out << '(' << c.getReal() << " + " << c.getImag() << 'i' << ')';
+    out << c.getReal() << " + " << c.getImag() << 'i';
     return out;
 }

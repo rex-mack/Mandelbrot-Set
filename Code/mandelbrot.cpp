@@ -1,13 +1,11 @@
 #include <stdexcept>
 #include <algorithm>
 #include <iostream>
+#include <filesystem>
+#include <fstream>
 
 #include "mandelbrot.hpp"
 #include "config.h"
-
-#include <filesystem>
-#include <fstream>
-#include <iostream>
 
 using namespace std;
 
@@ -17,7 +15,7 @@ using namespace std;
 */
 
 void MandelbrotGraph::validateValues(Complex center, double zoom, unsigned int targetIterations, unsigned int imageWidth, unsigned int imageHeight) const {
-    double maxRadius = IMAGE_RADIUS_NUMERATOR / zoom / IMAGE_RADIUS_DENOMINATOR;
+    double maxRadius = IMAGE_RADIUS_NUMERATOR / IMAGE_RADIUS_DENOMINATOR;
     if (center.getReal() < -maxRadius || center.getReal() > maxRadius||
         center.getImag() < -maxRadius || center.getImag() > maxRadius) {
         throw std::invalid_argument("Center coordinates must be within the range [-" + std::to_string(maxRadius) + ", " + std::to_string(maxRadius) + "]");
@@ -119,7 +117,10 @@ void MandelbrotGraph::runMandelbrotIterations() { //implement doing this in para
     std::cout << " ✅ Mandelbrot iterations complete.\n";
 
     //set maxIterations and minIterations
-    for(unsigned int i = 0; i < imageHeight * imageWidth; ++i) {
+    unsigned int maxPos = imageHeight * imageWidth;
+    maxIterations = 0;
+    minIterations = targetIterations; //set minIterations to targetIterations, so it will be updated if any pixel has less iterations
+    for(unsigned int i = 0; i < maxPos; ++i) {
         if (maxIterations < iterations[i]) maxIterations = iterations[i];
         if (minIterations > iterations[i]) minIterations = iterations[i];
     }
@@ -130,15 +131,15 @@ debug funcitons
 */
 
 Complex MandelbrotGraph::getCoordinates(unsigned int xPos, unsigned int yPos) const {
-    if (xPos >= imageWidth || yPos >= imageHeight) {
-        throw std::out_of_range("Pixel coordinates out of bounds");
+    if(xPos >= imageWidth || yPos >= imageHeight) {
+        throw std::out_of_range("Pixel coordinates out of bounds: (" + std::to_string(xPos) + ", " + std::to_string(yPos) + ")");
         return Complex(); // Return a default value in case of error
     }
     return coordinates[yPos * imageWidth + xPos];
 }
 Complex MandelbrotGraph::getEscape(unsigned int xPos, unsigned int yPos) const {
     if (xPos >= imageWidth || yPos >= imageHeight) {
-        throw std::out_of_range("Pixel coordinates out of bounds");
+        throw std::out_of_range("Pixel coordinates out of bounds: (" + std::to_string(xPos) + ", " + std::to_string(yPos) + ")");
         return Complex(); // Return a default value in case of error
     }
     return escape[yPos * imageWidth + xPos];
@@ -215,7 +216,8 @@ unsigned int MandelbrotGraph::getMinIterations() const {
 }
 unsigned int MandelbrotGraph::getIterations(unsigned int posX, unsigned int posY) const {
     if(posX >= imageWidth || posY >= imageHeight) {
-        throw std::out_of_range("Pixel coordinates out of bounds");
+        throw std::out_of_range("Pixel coordinates out of bounds: (" + std::to_string(posX) + ", " + std::to_string(posY) + ")");
+        return 0; // Return a default value in case of error
     }
     return iterations[posY * imageWidth + posX];
 }
@@ -296,7 +298,14 @@ void MandelbrotGraph::moveCenterByPixel(int xPixels, int yPixels) {
 }
 void MandelbrotGraph::zoomIn(double factor) {
     //set zoom
-    zoom = factor * zoom;
+    zoom += factor;
+    if (zoom < 1) {
+        throw std::invalid_argument("Zoom level must be greater than 1\n    Zoom set to 1");
+        zoom = 1;
+    } else if (zoom > MAX_ZOOM) {
+        throw std::invalid_argument("Zoom level must not exceed " + std::to_string(MAX_ZOOM) + "\n    Zoom set to " + std::to_string(MAX_ZOOM));
+        zoom = MAX_ZOOM;
+    }
 
     //set coordinates & do Mandelbrot Iterations
     setImageCoordinates();
@@ -313,6 +322,10 @@ void MandelbrotGraph::increaseIterations(unsigned int factor) {
 void MandelbrotGraph::writeDebugFiles() {
     //create files
     string base = "debug_files/";
+
+    if (!std::filesystem::exists(base)) { //if the debug_files folder does not exist, create it
+        std::filesystem::create_directory(base);
+    }
 
     string debugCoordinatesFile = base + "debug_coordinates.txt";
     string debugEscapeFile = base + "debug_escape.txt";
