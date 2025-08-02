@@ -4,35 +4,39 @@ Hello my name is Rex.
 Origonally, this project was for a freshman level final project, but I have always wanted to improve it.
 
 ## What it does
-Prints a PPM image of the mandelbrot set.
+Prints a PGM image of the mandelbrot set to Mandelbrot_Image.pgm
+You can save the image to Mandelbrot_Images file
 
 ## Use
 Compile using:
- - g++ -std+c++17 -I. main.cpp Code/*.cpp -0 mandelbrot  
+ - g++ -std=c++17 -I. main.cpp Code/*.cpp -o mandelbrot  
 
 Run using:
  - ./mandelbrot
 
 ## To Do
- - Implement a move function for class MandelbrotGraph
- - Implement a zoom function for class MandelbrotGraph
- - Implement a changeImageSize for class MandelbrotGraph
- - Implement filters for class ImageRenderer
- - Implement a print "save" function for class ImageRenderer (saves images to a file and doesn't overwrite previous images)
- - Create a UI for main to move, zoom, change filters, changing image size
+ - change zoom factor to 2^(x/4) or something similar
+ - add filters for more color!
+ - redo project to be web based
 
  ### Optimization
  - reuse values for move
  - reuse values for zoom
  - reuse values for changeImageSize
  - change double to long double or other type
+ - do the mandelbrot iterations in parallel
 
 ## Original Project
 The original program is in the folder "Origonal_Project". This was the project that I completed in school, which I will leave here as inspiration for the next version. The current images are from that project, but hopefully soon I will have the next version working!
 
-## Images
-<img src="Origonal_Project\3D_ExtraCredit.png" alt="drawing" width="400"/>
-<img src="Origonal_Project\3D_ExtraCredit2.png" alt="drawing" width="400"/>
+## Current Images
+<img src="Mandelbrot_Images/Test_Image1.png" alt="drawing" height="400"/>
+<img src="Mandelbrot_Images/Test_Image2.png" alt="drawing" height="400"/>
+<img src="Mandelbrot_Images/Test_Image3.png" alt="drawing" height="400"/>
+
+## Origonal Images
+<img src="Origonal_Project\3D_ExtraCredit.png" alt="drawing" height="400"/>
+<img src="Origonal_Project\3D_ExtraCredit2.png" alt="drawing" height="400"/>
 
 ## Ideas
 Create a UI that:
