@@ -1,31 +1,60 @@
+#include <csignal>
 #include <iostream>
+#include <filesystem>
+#include <fstream>
+#include <sstream>
 
-#include "mandelbrot.hpp"
-#include "imageRenderer.hpp"
+#include "config.h"
+#include "Code/complex.hpp"
+#include "Code/imageRenderer.hpp"
+#include "Code/mandelbrot.hpp"
+#include "Code/menu.hpp"
+#include "Code/parseString.hpp"
 
+/*
+Handeling Signals
+*/
 
-// Your writeDebugFiles() function prototype
-void writeDebugFiles(const MandelbrotGraph &graph);
+void handleSignal(int signal) {// Handle signals like Ctrl+C
+    if (signal == SIGINT) {
+        std::cout << "\nExiting gracefully...\n";
+        exit(0);
+    }
+}
 
-int main() {
+int main () {
+    std::signal(SIGINT, handleSignal); // Handle Ctrl+C to exit gracefully
+
+    std::cout << '\n'; // leave a line space after input
+
+    clearDebugFiles(); // Clear debug files at the start
+
+    printWelcomeMessage(); // Print welcome message
+
+    // Create the Graph object
+    MandelbrotGraph mandelbrotGraph;
+
+    std::cout << '\n';
+
+    // Render the image
     try {
-        const unsigned int width   = 200;    // Small for sanity
-        const unsigned int height  = 150;
-        const unsigned int zoom    = 100;
-        const unsigned int maxIter = 250;
-        const Complex center(-0.75, 0.1);    // Classic seahorse valley
-
-        // Step 1: Build graph
-        MandelbrotGraph graph(width, height, center, zoom);
-        graph.setIterationDepth(maxIter);
-
-        // Step 2: Write debug files
-        writeDebugFiles(graph);
-
-    } catch (const std::exception& e) {
-        std::cerr << "🔥 Fatal error: " << e.what() << '\n';
+        printImage(mandelbrotGraph);
+    } catch (const std::exception &e) {
+        std::cerr << "Error: " << e.what() << '\n';
         return 1;
     }
+    std::cout << '\n';
 
-    return 0;
+    // Print the menu
+    printMenu();
+
+    // main loop
+    while (true) {
+        std::cout << "\nEnter command: ";
+        std::string command;
+        std::getline(std::cin, command);
+        std::cout << '\n'; // leave a line space after input
+
+        if (executeCommand(command, mandelbrotGraph) == false) return 0; // Exit the program
+    }
 }
