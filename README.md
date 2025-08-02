@@ -8,7 +8,7 @@ Prints a PPM image of the mandelbrot set.
 
 ## Use
 Compile using:
- - g++ -std=c++17 -O2 -o mandelbrot main.cpp complex.cpp mandelbrot.cpp imageRenderer.cpp  
+ - g++ -std+c++17 -I. main.cpp Code/*.cpp -0 mandelbrot  
 
 Run using:
  - ./mandelbrot

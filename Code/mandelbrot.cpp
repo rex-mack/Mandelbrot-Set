@@ -42,35 +42,30 @@ void MandelbrotGraph::setImageCoordinates() {
 
     //precompute the x coordinates and y coordiants
     double *coordinatesX = new double [imageWidth];
-    double *coordinatesI = new double [imageHeight];
 
-    //      precalculate for coordiantes
-    double imageMin = std::min(imageWidth, imageHeight);
-    double aspectX = static_cast<double>(imageWidth) / imageMin;
-    double aspectI = static_cast<double>(imageHeight) / imageMin;
-    double maxValue = IMAGE_RADIUS_NUMERATOR / zoom / IMAGE_RADIUS_DENOMINATOR;
+    //Constants for the coordinates
+    int imageMin = std::min(START_IMAGE_WIDTH, START_IMAGE_HEIGHT);
+    double coordDenominator = (imageMin - 1) * IMAGE_RADIUS_DENOMINATOR * zoom;
 
-    double spanScaleX = (2.0 * maxValue * aspectX) / (imageWidth - 1);
-    double spanScaleI = (2.0 * maxValue * aspectI) / (imageHeight - 1);
-
-    //      calculate x coordiantes
-    double centerReal = center.getReal();
-    for (unsigned int x = 0; x < imageWidth; ++x) {
-        coordinatesX[x] = centerReal + (x * spanScaleX - maxValue * aspectX);
+    double centerX = center.getReal();
+    int numConstX = imageWidth - 1;
+    for(int x = 0; x < imageWidth; ++x) {
+        double coordNumerator = (2 * x - numConstX) * IMAGE_RADIUS_NUMERATOR;
+        coordinatesX[x] = coordNumerator / coordDenominator + centerX;
     }
 
-    //      calculate i coordinates
-    double centerImag = center.getImag();
-    for (unsigned int i = 0; i < imageHeight; ++i) {
-        coordinatesI[i] = centerImag + (i * spanScaleI - maxValue * aspectI);
-    }
+    double centerI = center.getImag();
+    int numConstY = imageHeight - 1;
+    for(int i = 0; i < imageHeight; ++i) {
+        double coordNumerator = (2 * i - numConstY) * IMAGE_RADIUS_NUMERATOR;
+        double coordI = coordNumerator / coordDenominator + centerI;
 
-    //insert coordinates & reset escape and iterations
-    for (unsigned int i = 0; i < imageHeight; ++i) {
-        for (unsigned int x = 0; x < imageWidth; ++x) {
-            coordinates[i * imageWidth + x] = Complex(coordinatesX[x], coordinatesI[i]);
-            escape[i*imageWidth + x] = Complex();
-            iterations[i*imageWidth + x] = 0;
+        for(int x = 0; x < imageWidth; ++x) {
+
+            unsigned int pixelIndex = i * imageWidth + x;
+            coordinates[pixelIndex] = Complex(coordinatesX[x], coordI);
+            escape[pixelIndex] = Complex(0.0, 0.0);
+            iterations[pixelIndex] = 0;
         }
     }
 
@@ -80,7 +75,6 @@ void MandelbrotGraph::setImageCoordinates() {
 
     //delete used pointers
     delete[] coordinatesX;
-    delete[] coordinatesI;
 }
 void MandelbrotGraph::runMandelbrotIterations() { //implement doing this in parallel
     /*
@@ -277,23 +271,42 @@ void MandelbrotGraph::setGraphValues(Complex center, double zoom, unsigned int t
 
 }
 
-void MandelbrotGraph::moveCenterByPixel(int xPixels, int yPixels) {
-    //compute new center coordinate X & I
-    double imageMin = std::min(imageWidth, imageHeight);
-    double aspectX = static_cast<double>(imageWidth) / imageMin;
-    double aspectI = static_cast<double>(imageHeight) / imageMin;
-    double maxValue = IMAGE_RADIUS_NUMERATOR / zoom / IMAGE_RADIUS_DENOMINATOR;
+void MandelbrotGraph::moveCenterByPixel(int xPixels, int yPixels) { //just add a constant to each coordinate for optimization... (loss in precision?)
 
-    double spanScaleX = (2.0 * maxValue * aspectX) / (imageWidth - 1);
-    double spanScaleI = (2.0 * maxValue * aspectI) / (imageHeight - 1);
+    int startImageMin = std::min(START_IMAGE_WIDTH, START_IMAGE_HEIGHT);
+    Complex shift(
+        (2.0 * xPixels * IMAGE_RADIUS_NUMERATOR) / ((startImageMin - 1) * IMAGE_RADIUS_DENOMINATOR * zoom), 
+        -(2.0 * yPixels * IMAGE_RADIUS_NUMERATOR) / ((startImageMin - 1) * IMAGE_RADIUS_DENOMINATOR * zoom)
+    );
 
-    Complex newCenter = center + Complex(xPixels * spanScaleX, - yPixels * spanScaleI);
+    cout << "🔄 Moving center by pixel: (" << xPixels << ", " << yPixels << ") -> " << shift << '\n';
 
-    //set new center
-    center = newCenter;
+    try {
+        validateValues(center + shift, zoom, targetIterations, imageWidth, imageHeight);
+    } catch (const std::invalid_argument &e) {
+        throw std::invalid_argument("Invalid parameters after moving center: " + std::string(e.what()) + "\n    Center stays the same");
 
-    //set coordinates and do Mandelbrot Iterations
+    }
+    center = center + shift;
+
+    /*
+    for(int i = 0; i < imageHeight; ++i) {
+        for(int x = 0; x < imageWidth; ++x) {
+            unsigned int pixelIndex = i * imageWidth + x;
+            coordinates[pixelIndex] = coordinates[pixelIndex] + shift;
+            escape[pixelIndex] = Complex(0.0, 0.0);
+            iterations[pixelIndex] = 0;
+        }
+    }
+
+    maxIterations = 0;
+    minIterations = 0;
+    */
+
+
+    //set the coordinates & do the Mandelbrot iterations
     setImageCoordinates();
+
     runMandelbrotIterations();
 }
 void MandelbrotGraph::zoomIn(double factor) {
@@ -371,13 +384,13 @@ void MandelbrotGraph::writeDebugFiles() {
     outIterations << maxIterations << '\n';
 
     //image body
-    for (unsigned int pixY = 0; pixY < imageWidth; ++pixY) {
+    for (unsigned int pixY = 0; pixY < imageHeight; ++pixY) {
         if (pixY > 0) {
             outCoordinates << '\n';
             outEscape << '\n';
             outIterations << '\n';
         }
-        for (unsigned int pixX = 0; pixX < imageHeight; ++pixX) {
+        for (unsigned int pixX = 0; pixX < imageWidth; ++pixX) {
             if (pixX > 0) {
                 outCoordinates << " ";
                 outEscape << " ";
