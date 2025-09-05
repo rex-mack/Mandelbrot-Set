@@ -14,18 +14,6 @@ Compile using:
 Run using:
  - ./mandelbrot
 
-## To Do
- - change zoom factor to 2^(x/4) or something similar
- - add filters for more color!
- - redo project to be web based
-
- ### Optimization
- - reuse values for move
- - reuse values for zoom
- - reuse values for changeImageSize
- - change double to long double or other type
- - do the mandelbrot iterations in parallel
-
 ## Original Project
 The original program is in the folder "Origonal_Project". This was the project that I completed in school, which I will leave here as inspiration for the next version. The current images are from that project, but hopefully soon I will have the next version working!
 
@@ -37,6 +25,18 @@ The original program is in the folder "Origonal_Project". This was the project t
 ## Origonal Images
 <img src="Origonal_Project\3D_ExtraCredit.png" alt="drawing" height="400"/>
 <img src="Origonal_Project\3D_ExtraCredit2.png" alt="drawing" height="400"/>
+
+## To Do
+ - change zoom factor to 2^(x/4) or something similar
+ - add filters for more color!
+ - redo project to be web based
+
+ ### Optimization
+ - reuse values for move
+ - reuse values for zoom
+ - reuse values for changeImageSize
+ - change double to long double or other type
+ - do the mandelbrot iterations in parallel
 
 ## Ideas
 Create a UI that:
